@@ -1,31 +1,31 @@
 import { Request, Response } from 'express';
 import { prisma } from '../prisma/client';
+import { CreateUserBody, UserResponse } from '../types/userTypes';
 
-export const getUsers = async (_req: Request, res: Response) => {
+export const getUsers = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const users = await prisma.user.findMany();
-    return res.json(users);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Erreur serveur' });
+    const users: UserResponse[] = await prisma.user.findMany();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur lors de la récupération des utilisateurs.' });
   }
 };
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser = async (
+  req: Request<{}, {}, CreateUserBody>,
+  res: Response,
+): Promise<void> => {
   try {
     const { email, name } = req.body;
-    if (!email) return res.status(400).json({ error: 'email required' });
 
-    const user = await prisma.user.create({
-      data: { email, name }
+    const newUser: UserResponse = await prisma.user.create({
+      data: { email, name },
     });
-    return res.status(201).json(user);
-  } catch (err: any) {
-    console.error(err);
-    // Prisma unique constraint example
-    if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'Email already exists' });
-    }
-    return res.status(500).json({ error: 'Erreur serveur' });
+
+    res.status(201).json(newUser);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Erreur lors de la création de l’utilisateur.' });
   }
 };
