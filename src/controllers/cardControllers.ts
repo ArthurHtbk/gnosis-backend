@@ -55,15 +55,15 @@ export const createCard = async (
   res: Response<CardResponse | { error: string }>
 ): Promise<void> => {
   try {
-    const { evocationId, question, answers, rightAnswer } = req.body;
+    const { evocationId, question, answers, rightAnswerIndex } = req.body;
 
-    if (!evocationId || !question || !answers.length || !rightAnswer) {
+    if (!evocationId || !question || !answers.length || !rightAnswerIndex) {
       res.status(400).json({ error: 'Les champs evocationId, question et answer sont requis.' });
       return;
     }
 
     const newCard = await prisma.card.create({
-      data: { evocationId, question, answers, rightAnswer },
+      data: { evocationId, question, answers, rightAnswerIndex },
     });
 
     res.status(201).json(newCard);
@@ -87,11 +87,11 @@ export const updateCard = async (
       return;
     }
 
-    const { question, answers, rightAnswer } = req.body;
+    const { question, answers, rightAnswerIndex } = req.body;
 
     const updatedCard = await prisma.card.update({
       where: { id },
-      data: { question, answers, rightAnswer },
+      data: { question, answers, rightAnswerIndex },
     });
 
     res.status(200).json(updatedCard);
