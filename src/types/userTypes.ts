@@ -5,7 +5,8 @@ export interface CreateUserBody {
 
 export interface UserResponse {
   id: number;
+  supabaseId: string;
   email: string;
-  name?: string;
+  name: string | null;
   createdAt: Date;
 }

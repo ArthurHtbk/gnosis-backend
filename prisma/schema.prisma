@@ -7,9 +7,103 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/* ----------------------------- */
+/* Users                         */
+/* ----------------------------- */
 model User {
+  id            Int             @id @default(autoincrement())
+  email         String          @unique
+  name          String?
+  createdAt     DateTime        @default(now())
+  supabaseId    String          @unique
+
+  Evocation     Evocation[]
+  ReviewLog     ReviewLog[]     @relation("UserReviews")
+  ReviewSession ReviewSession[]
+}
+
+/* ----------------------------- */
+/* Evocations                    */
+/* ----------------------------- */
+model Evocation {
   id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
+  userId    Int
+  title     String
+  content   String
   createdAt DateTime @default(now())
+
+  Card      Card[]
+  User      User     @relation(fields: [userId], references: [id])
+}
+
+/* ----------------------------- */
+/* Cards                         */
+/* ----------------------------- */
+model Card {
+  id             Int         @id @default(autoincrement())
+  evocationId    Int
+  question       String
+  answers        String[]
+  rightAnswerIndex Int       @default(0)
+  createdAt      DateTime    @default(now())
+
+  // SM-2
+  nextReviewAt   DateTime?
+  interval       Int?        @default(0)
+  easeFactor     Float?      @default(2.5)
+  repetitions    Int?        @default(0)
+
+  Evocation      Evocation   @relation(fields: [evocationId], references: [id])
+  ReviewLog      ReviewLog[] @relation("CardReviews")
+  SessionCards   ReviewSessionCard[]
+}
+
+
+/* ----------------------------- */
+/* Review sessions               */
+/* ----------------------------- */
+model ReviewSession {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+
+  startedAt  DateTime @default(now())
+  expiresAt  DateTime
+  finishedAt DateTime?
+
+  cards      ReviewSessionCard[]
+  ReviewLog  ReviewLog[] @relation("SessionReviews")
+
+  User       User     @relation(fields: [userId], references: [id])
+}
+
+/* ----------------------------- */
+/* Session snapshot of cards     */
+/* ----------------------------- */
+model ReviewSessionCard {
+  id        Int      @id @default(autoincrement())
+  sessionId Int
+  cardId    Int
+
+  reviewed  Boolean @default(false)
+
+  session   ReviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  card      Card          @relation(fields: [cardId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, cardId])
+}
+
+/* ----------------------------- */
+/* Review logs                   */
+/* ----------------------------- */
+model ReviewLog {
+  id          Int            @id @default(autoincrement())
+  userId      Int
+  cardId      Int
+  sessionId   Int
+  success     Boolean
+  reviewedAt  DateTime       @default(now())
+
+  User        User           @relation(fields: [userId], references: [id], name: "UserReviews")
+  Card        Card           @relation(fields: [cardId], references: [id], name: "CardReviews")
+  ReviewSession ReviewSession @relation(fields: [sessionId], references: [id], name: "SessionReviews")
 }
